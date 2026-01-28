@@ -14,22 +14,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout repo
       - uses: actions/checkout@v4
 
-      # 2️⃣ Setup Python
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      # 3️⃣ Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install nuitka
 
-      # 4️⃣ Compile binary with explicit output filename
       - name: Compile binary
         run: |
           mkdir -p build
@@ -45,14 +41,12 @@ jobs:
             --output-filename=build/headpose \
             src/main.py
 
-      # 5️⃣ Check build folder
       - name: Check build folder
         run: |
           echo "=== BUILD DIR CONTENTS ==="
           ls -lh build
           echo "Binary exists? $(test -f build/headpose && echo yes || echo no)"
 
-      # 6️⃣ Publish GitHub Release with automatic tag
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
