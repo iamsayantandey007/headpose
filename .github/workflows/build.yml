@@ -14,21 +14,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout repo
       - uses: actions/checkout@v4
 
+      # 2️⃣ Setup Python
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
+      # 3️⃣ Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install nuitka
 
-      - name: Compile binary
+      # 4️⃣ Create build folder
+      - name: Prepare build folder
         run: |
           mkdir -p build
+
+      # 5️⃣ Compile binary with proper output
+      - name: Compile binary
+        run: |
           nuitka \
             --onefile \
             --follow-imports \
@@ -38,15 +46,23 @@ jobs:
             --include-data-dir=src/weights=weights \
             --include-data-file=config.yaml=config.yaml \
             --output-dir=build \
-            --output-filename=build/headpose \
+            --output-filename=headpose \
             src/main.py
 
+      # 6️⃣ Check build folder
       - name: Check build folder
         run: |
           echo "=== BUILD DIR CONTENTS ==="
           ls -lh build
-          echo "Binary exists? $(test -f build/headpose && echo yes || echo no)"
+          if [ -f build/headpose ]; then
+            echo "Binary created successfully ✅"
+            chmod +x build/headpose
+          else
+            echo "Binary not found ❌"
+            exit 1
+          fi
 
+      # 7️⃣ Publish GitHub Release
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
