@@ -1,37 +1,30 @@
 name: Build and Publish Nuitka Binary
 
-# Trigger on push to main or manual workflow dispatch
 on:
   push:
     branches:
       - main
   workflow_dispatch:
 
-# Allow creating releases
 permissions:
   contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      # 1️⃣ Checkout repo
       - uses: actions/checkout@v4
 
-      # 2️⃣ Setup Python
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      # 3️⃣ Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install nuitka
 
-      # 4️⃣ Compile binary with Nuitka
       - name: Compile binary
         run: |
           mkdir -p build
@@ -46,13 +39,11 @@ jobs:
             --output-dir=build \
             src/main.py
 
-      # 5️⃣ Debug: show build folder contents (optional)
       - name: Debug build output
         run: |
           echo "=== BUILD DIR CONTENTS ==="
           ls -lh build
 
-      # 6️⃣ Rename binary to stable name
       - name: Rename binary
         run: |
           BIN=$(find build -type f -maxdepth 2 | grep -E 'main(\.bin)?$' | head -n 1)
@@ -60,7 +51,6 @@ jobs:
           mv "$BIN" build/headpose
           chmod +x build/headpose
 
-      # 7️⃣ Publish release and attach binary
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -69,3 +59,5 @@ jobs:
           files: build/headpose
           draft: false
           prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
