@@ -44,7 +44,6 @@ jobs:
             --python-flag=no_docstrings \
             --static-libpython=no \
             --include-data-dir=src/weights=weights \
-            --include-data-file=config.yaml=config.yaml \
             --output-dir=build \
             --output-filename=headpose \
             src/main.py
