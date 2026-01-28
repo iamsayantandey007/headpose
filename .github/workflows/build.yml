@@ -44,11 +44,12 @@ jobs:
             --output-dir=build \
             src/main.py
 
-      # 5️⃣ Debug: show build folder contents (optional)
-      - name: Debug build output
+      # 5️⃣ Debug: show build folder contents
+      - name: Check build folder
         run: |
           echo "=== BUILD DIR CONTENTS ==="
           ls -lh build
+          echo "Binary exists? $(test -f build/main && echo yes || echo no)"
 
       # 6️⃣ Rename binary to stable name
       - name: Rename binary
@@ -58,7 +59,15 @@ jobs:
           mv "$BIN" build/headpose
           chmod +x build/headpose
 
-      # 7️⃣ Publish GitHub Release with unique tag
+      # 7️⃣ Create Git tag automatically
+      - name: Create Git tag
+        run: |
+          git config --local user.name "iamsayantandey007"
+          git config --local user.email "iamsayantandey007@gmail.com"
+          git tag -a "v${GITHUB_RUN_NUMBER}" -m "Build $GITHUB_RUN_NUMBER"
+          git push origin "v${GITHUB_RUN_NUMBER}"
+
+      # 8️⃣ Publish GitHub Release
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -67,5 +76,6 @@ jobs:
           files: build/headpose
           draft: false
           prerelease: false
+          create_tag: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
