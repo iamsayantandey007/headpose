@@ -1,4 +1,4 @@
-name: Build Nuitka Binary
+name: Build and Publish Nuitka Binary
 
 on:
   push:
@@ -7,28 +7,30 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: write   # allows creating releases
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
+      # 1️⃣ Checkout the repo
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      # 2️⃣ Setup Python
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Install Dependencies
+      # 3️⃣ Install dependencies
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install nuitka
 
-      - name: Compile Binary with Nuitka
+      # 4️⃣ Compile the binary using Nuitka
+      - name: Compile binary
         run: |
           nuitka \
             --onefile \
@@ -41,19 +43,16 @@ jobs:
             --output-dir=build \
             src/main.py
 
-      - name: Rename Binary
+      # 5️⃣ Rename the binary to a stable name
+      - name: Rename binary
         run: |
-          mv build/main.bin build/headpose
+          BIN=$(find build -type f -maxdepth 2 | grep -E 'main(\.bin)?$' | head -n 1)
+          echo "Found binary: $BIN"
+          mv "$BIN" build/headpose
           chmod +x build/headpose
 
-      - name: Delete previous release
-        uses: dev-drprasad/delete-tag-and-release@v1.1
-        with:
-          tag_name: latest
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
-
-      - name: Create GitHub Release
+      # 6️⃣ Publish as GitHub Release (stable URL)
+      - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
@@ -61,9 +60,3 @@ jobs:
           files: build/headpose
           draft: false
           prerelease: false
-
-      - name: Upload Binary Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: headpose_binary
-          path: build/headpose
