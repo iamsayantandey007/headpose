@@ -14,9 +14,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout source
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
@@ -27,8 +29,7 @@ jobs:
           pip install nuitka
 
       - name: Prepare build folder
-        run: |
-          mkdir -p build
+        run: mkdir -p build
 
       - name: Compile binary
         run: |
@@ -43,15 +44,17 @@ jobs:
             --output-filename=headpose \
             src/main.py
 
-      - name: Check build folder
+          #IMPORTANT: make binary executable
+          chmod 755 build/headpose
+
+      - name: Verify build output
         run: |
           echo "=== BUILD DIR CONTENTS ==="
           ls -lh build
-          if [ -f build/headpose ]; then
-            echo "Binary created successfully"
-            chmod +x build/headpose
+          if [ -x build/headpose ]; then
+            echo "Executable binary verified"
           else
-            echo "Binary not found"
+            echo "Binary missing or not executable"
             exit 1
           fi
 
