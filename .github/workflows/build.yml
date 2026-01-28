@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write  
+  contents: write
 
 jobs:
   build:
@@ -37,6 +37,7 @@ jobs:
             --python-flag=no_docstrings \
             --static-libpython=no \
             --include-data-dir=src/weights=weights \
+            --include-data-file=config.yaml=config.yaml \
             --output-dir=build \
             src/main.py
 
@@ -45,12 +46,21 @@ jobs:
           mv build/main.bin build/headpose
           chmod +x build/headpose
 
-      - name: Create GitHub Release and Upload Binary
+      - name: Delete previous release
+        uses: dev-drprasad/delete-tag-and-release@v1.1
+        with:
+          tag_name: latest
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ github.run_number }}
-          name: headpose v${{ github.run_number }}
+          tag_name: latest
+          name: Latest Build
           files: build/headpose
+          draft: false
+          prerelease: false
 
       - name: Upload Binary Artifact
         uses: actions/upload-artifact@v4
