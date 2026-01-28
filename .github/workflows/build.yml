@@ -14,22 +14,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout repo
       - uses: actions/checkout@v4
 
-      # 2️⃣ Setup Python
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      # 3️⃣ Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install nuitka
 
-      # 4️⃣ Compile binary with Nuitka
       - name: Compile binary
         run: |
           mkdir -p build
@@ -43,14 +39,12 @@ jobs:
             --output-dir=build \
             src/main.py
 
-      # 5️⃣ Debug: show build folder contents
       - name: Check build folder
         run: |
           echo "=== BUILD DIR CONTENTS ==="
           ls -lh build
           echo "Binary exists? $(test -f build/main && echo yes || echo no)"
 
-      # 6️⃣ Rename binary to stable name
       - name: Rename binary
         run: |
           BIN=$(find build -type f -maxdepth 2 | grep -E 'main(\.bin)?$' | head -n 1)
@@ -58,7 +52,6 @@ jobs:
           mv "$BIN" build/headpose
           chmod +x build/headpose
 
-      # 7️⃣ Create Git tag automatically
       - name: Create Git tag
         run: |
           git config --local user.name "iamsayantandey007"
@@ -66,7 +59,6 @@ jobs:
           git tag -a "v${GITHUB_RUN_NUMBER}" -m "Build $GITHUB_RUN_NUMBER"
           git push origin "v${GITHUB_RUN_NUMBER}"
 
-      # 8️⃣ Publish GitHub Release
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
