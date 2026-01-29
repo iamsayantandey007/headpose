@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 permissions:
   contents: write
@@ -127,3 +127,23 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: root-repo
+
+      - name: Verify artifacts
+        run: |
+          ls -lh
+          ls -lh build
+          ls -lh *.deb
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.VERSION }}
+          name: Headpose v${{ env.VERSION }}
+          files: |
+            build/headpose
+            headpose_${{ env.VERSION }}_amd64.deb
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
