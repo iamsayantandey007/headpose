@@ -18,6 +18,7 @@ jobs:
     env:
       VERSION: "1.0.0"
       PKG_NAME: headpose
+      REPO_ARCHIVE: root-repo.tar.gz
 
     steps:
 
@@ -85,6 +86,9 @@ jobs:
 
           dpkg-deb --build ${PKG_DIR}
 
+          echo "DEB CREATED:"
+          s -lh $DEB_FILE
+
 
       # ✅ Install repo tools
       - name: Install APT repo tools
@@ -121,6 +125,13 @@ jobs:
 
           sed -i '1iOrigin: HeadPose\nLabel: HeadPose' dists/stable/Release
 
+          cd ..
+
+      # ✅ Archive ENTIRE repo (IMPORTANT)
+      - name: Archive APT repository
+        run: |
+          tar -czf $REPO_ARCHIVE root-repo
+          ls -lh $REPO_ARCHIVE
 
       # ✅ Upload GitHub Pages artifact
       - name: Upload Pages artifact
@@ -132,7 +143,7 @@ jobs:
         run: |
           ls -lh
           ls -lh build
-          ls -lh *.deb
+          ls -lh $REPO_ARCHIVE
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
@@ -141,7 +152,7 @@ jobs:
           name: Headpose v${{ env.VERSION }}
           files: |
             build/headpose
-            headpose_${{ env.VERSION }}_amd64.deb
+            ${{ env.REPO_ARCHIVE }}
           draft: false
           prerelease: false
         env:
