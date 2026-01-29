@@ -86,10 +86,6 @@ jobs:
 
           dpkg-deb --build ${PKG_DIR}
 
-          echo "DEB CREATED:"
-          s -lh $DEB_FILE
-
-
       # ✅ Install repo tools
       - name: Install APT repo tools
         run: |
