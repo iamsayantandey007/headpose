@@ -92,37 +92,27 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y dpkg-dev apt-utils
 
-
-      # ✅ Checkout gh-pages branch (to KEEP old packages)
-      - name: Checkout gh-pages
-        uses: actions/checkout@v4
-        with:
-          ref: gh-pages
-          path: repo
-        continue-on-error: true
-
-
       # ✅ Create repo if first run
       - name: Prepare repository folder
         run: |
-          if [ ! -d repo ]; then
-            mkdir repo
+          if [ ! -d root-repo ]; then
+            mkdir root-repo
           fi
 
-          mkdir -p repo/pool/main/h/headpose
-          mkdir -p repo/dists/stable/main/binary-amd64
+          mkdir -p root-repo/pool/main/h/headpose
+          mkdir -p root-repo/dists/stable/main/binary-amd64
 
 
       # ✅ Move new package into pool
       - name: Add package to pool
         run: |
-          mv headpose_${VERSION}_amd64.deb repo/pool/main/h/headpose/
+          mv headpose_${VERSION}_amd64.deb root-repo/pool/main/h/headpose/
 
 
       # ✅ Generate Packages + Release (NO GPG)
       - name: Generate APT metadata
         run: |
-          cd repo
+          cd root-repo
 
           dpkg-scanpackages -m pool > dists/stable/main/binary-amd64/Packages
           gzip -k -f dists/stable/main/binary-amd64/Packages
@@ -136,7 +126,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: repo
+          path: root-repo
 
 
   deploy:
