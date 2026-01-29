@@ -95,7 +95,7 @@ def process_camera(camera_url, stop_event):
 
 if __name__ == "__main__":
 
-    SERVER_URL="http://172.14.3.27:9000/rtsp"
+    SERVER_URL="http://172.14.3.41:9000/rtsp"
     response = requests.get(SERVER_URL, timeout=10)
     response.raise_for_status()
 
