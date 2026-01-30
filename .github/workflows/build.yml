@@ -38,7 +38,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install nuitka
 
       # Build Nuitka binary
       - name: Build Nuitka binary
@@ -78,7 +77,7 @@ jobs:
           Architecture: amd64
           Maintainer: Sayantan Dey <iamsayantandey007@gmail.com>
           Description: Head Pose Estimation Tool
-          Head pose estimation using SCRFD + Pose Estimator.
+            Head pose estimation using SCRFD + Pose Estimator.
           EOF
 
           dpkg-deb --build ${PKG_DIR}
@@ -101,7 +100,7 @@ jobs:
           Architecture: all
           Maintainer: Sayantan Dey <iamsayantandey007@gmail.com>
           Description: Headpose APT keyring
-          Contains the GPG key to verify headpose packages.
+            Contains the GPG key to verify headpose packages.
           EOF
 
           # Sources list
@@ -113,7 +112,7 @@ jobs:
             > ${KEYRING_DIR}/etc/apt/preferences.d/headpose-repository-pin-600
 
           # Convert public key ASCII to .gpg (public key stored in repo, not secret)
-          gpg --dearmor < keys/public.asc > ${KEYRING_DIR}/usr/share/keyrings/headpose-repo-keyring.gpg
+          gpg --dearmor < keys/headpose-public.asc > ${KEYRING_DIR}/usr/share/keyrings/headpose-repo-keyring.gpg
 
           dpkg-deb --build ${KEYRING_DIR}
 
