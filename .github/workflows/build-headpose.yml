@@ -1,0 +1,140 @@
+name: Build and Publish Headpose
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "src/**"
+      - "requirements.txt"
+      - "keys/**"
+      - ".github/workflows/build-headpose.yml"
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: headpose-release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      VERSION: "1.0.0"
+      PKG_NAME: headpose
+      REPO_ARCHIVE: root-repo.tar.gz
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install nuitka
+          pip install -r requirements.txt
+
+      #Build binary
+      - name: Build Nuitka binary
+        run: |
+          mkdir -p build
+
+          nuitka \
+            --onefile \
+            --follow-imports \
+            --lto=no \
+            --python-flag=no_docstrings \
+            --static-libpython=no \
+            --include-data-dir=src/weights=weights \
+            --output-dir=build \
+            --output-filename=headpose \
+            src/main.py
+
+          chmod 755 build/headpose
+
+      #Create DEB
+      - name: Build headpose DEB
+        run: |
+          PKG_DIR=${PKG_NAME}_${VERSION}_amd64
+
+          mkdir -p ${PKG_DIR}
+          mkdir -p ${PKG_DIR}/DEBIAN
+          mkdir -p ${PKG_DIR}/usr/bin
+
+          cp build/headpose ${PKG_DIR}/usr/bin/headpose
+
+          cat <<EOF > ${PKG_DIR}/DEBIAN/control
+          Package: headpose
+          Version: ${VERSION}
+          Section: utils
+          Priority: optional
+          Architecture: amd64
+          Maintainer: Sayantan Dey <iamsayantandey007@gmail.com>
+          Description: Head Pose Estimation Tool
+           Head pose estimation using SCRFD + Pose Estimator.
+          EOF
+
+          dpkg-deb --build ${PKG_DIR}
+
+      #Repo tools
+      - name: Install repo tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev apt-utils gnupg
+
+      #Import private key
+      - name: Import GPG key
+        run: |
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
+
+      #Build repo
+      - name: Create repository
+        run: |
+          mkdir -p root-repo/pool/main/h/headpose
+          mkdir -p root-repo/dists/stable/main/binary-amd64
+
+          mv headpose_${VERSION}_amd64.deb \
+             root-repo/pool/main/h/headpose/
+
+          cd root-repo
+
+          dpkg-scanpackages -m pool > dists/stable/main/binary-amd64/Packages
+          gzip -k -f dists/stable/main/binary-amd64/Packages
+
+          apt-ftparchive release dists/stable > dists/stable/Release
+          sed -i '1iOrigin: HeadPose\nLabel: HeadPose' dists/stable/Release
+
+          gpg --batch --yes --pinentry-mode loopback \
+              --passphrase "${{ secrets.GPG_PASSPHRASE }}" \
+              --clearsign -o dists/stable/InRelease dists/stable/Release
+
+          gpg --batch --yes --pinentry-mode loopback \
+              --passphrase "${{ secrets.GPG_PASSPHRASE }}" \
+              -abs -o dists/stable/Release.gpg dists/stable/Release
+
+          cd ..
+
+      #Archive repo
+      - name: Archive repo
+        run: tar -czf $REPO_ARCHIVE root-repo
+
+      #Publish Release
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.VERSION }}
+          name: Headpose v${{ env.VERSION }}
+          files: |
+            build/headpose
+            ${{ env.REPO_ARCHIVE }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
