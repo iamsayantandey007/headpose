@@ -56,10 +56,10 @@ jobs:
             ${KEYRING_DIR}/usr/share/keyrings/headpose-repo-keyring.gpg
 
           echo "deb [signed-by=/usr/share/keyrings/headpose-repo-keyring.gpg] http://172.14.3.41:8000 stable main" \
-            > ${KEYRING_DIR}/etc/apt/sources.list.d/headpose.list
+            > ${KEYRING_DIR}/etc/apt/sources.list.d/headpose-ubuntu2404-x86_64.list
 
           echo -e "Package: headpose\nPin: release o=HeadPose\nPin-Priority: 600" \
-            > ${KEYRING_DIR}/etc/apt/preferences.d/headpose
+            > ${KEYRING_DIR}/etc/apt/preferences.d/headpose-repository-pin-600
 
           dpkg-deb --build ${KEYRING_DIR}
 
